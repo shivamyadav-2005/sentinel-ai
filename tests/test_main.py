@@ -6,6 +6,7 @@ from backend.main import app
 client = TestClient(app)
 
 
+
 def test_root_endpoint():
     response = client.get("/")
 
@@ -13,7 +14,9 @@ def test_root_endpoint():
     assert response.json() == {
         "message": "SentinelAI API is running!",
         "status": "online",
+        "environment": "development",
     }
+
 
 
 def test_health_endpoint():

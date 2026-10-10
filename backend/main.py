@@ -1,18 +1,21 @@
 
 from fastapi import FastAPI
 
+from backend.config import settings
+
 app = FastAPI(
-    title="SentinelAI",
+    title=settings.app_name,
     description="AI assistant and cloud security platform",
-    version="0.1.0",
+    version=settings.app_version,
 )
 
 
 @app.get("/")
 def root():
     return {
-        "message": "SentinelAI API is running!",
+        "message": f"{settings.app_name} API is running!",
         "status": "online",
+        "environment": settings.app_env,
     }
 
 
@@ -20,5 +23,5 @@ def root():
 def health_check():
     return {
         "status": "healthy",
-        "service": "SentinelAI",
+        "service": settings.app_name,
     }

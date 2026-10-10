@@ -129,3 +129,24 @@ python -m pytest -v
 
 ### Current milestone
 Automated tests added for the root and health endpoints.
+
+
+
+## 13. Configuration Management
+
+### Package
+- pydantic-settings: Loads and validates application settings.
+
+### Configuration module
+- File: backend/config.py
+- Settings are defined in a Settings class.
+- Environment variables can override default values.
+- A local .env file can provide development settings.
+
+### Security
+- Never commit real credentials or API keys.
+- Keep .env private.
+- Use .env.example to document required configuration keys.
+
+### Current milestone
+Centralized application configuration has been added.
