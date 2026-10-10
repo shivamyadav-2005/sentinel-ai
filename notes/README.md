@@ -82,3 +82,50 @@ Initial repository structure and configuration files.
 ## 9. Next Milestone
 
 Initialize Git, connect the GitHub remote, and create the first commit.
+
+
+## 11. First Working Backend
+
+### Technology
+- FastAPI: API framework
+- Uvicorn: ASGI web server
+
+### Run the server
+python -m uvicorn backend.main:app --reload
+
+### Endpoints
+- GET /: Root endpoint
+- GET /health: Health check
+- GET /docs: Interactive API documentation
+
+### HTTP Status Codes
+- 200 OK: Request succeeded.
+- 404 Not Found: Requested resource does not exist.
+
+### Current Status
+The backend starts successfully.
+Both the root endpoint and health endpoint return 200 OK.
+The favicon request returns 404 because no favicon has been configured.
+
+
+
+## 12. Automated Testing
+
+### Tools
+- pytest: Runs automated tests.
+- HTTPX: Provides the HTTP client used by FastAPI's TestClient.
+
+### Run tests
+python -m pytest -v
+
+### Current tests
+- test_root_endpoint: Checks the root response.
+- test_health_endpoint: Checks the health response.
+
+### Why automated tests?
+- Detect regressions after code changes.
+- Verify expected status codes and response data.
+- Reduce the need for repetitive manual testing.
+
+### Current milestone
+Automated tests added for the root and health endpoints.
