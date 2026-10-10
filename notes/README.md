@@ -150,3 +150,22 @@ Automated tests added for the root and health endpoints.
 
 ### Current milestone
 Centralized application configuration has been added.
+
+
+
+
+## 14. Configuration Testing
+
+### Tests implemented
+- Verify the default application name.
+- Verify environment-variable overrides.
+- Use pytest's monkeypatch fixture to isolate environment changes.
+- Set `_env_file=None` to prevent `.env` values from affecting these tests.
+
+### Key learning
+Environment-variable overrides allow application settings to change
+without modifying Python source code.
+
+### Current milestone
+Automated tests cover configuration defaults and environment overrides.
+
