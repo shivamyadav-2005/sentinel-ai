@@ -1,4 +1,5 @@
 from fastapi import Request
+from fastapi.testclient import TestClient
 
 from backend.main import app
 
@@ -71,4 +72,33 @@ def test_api_error_handler():
             for route in app.router.routes
             if getattr(route, "path", None) != "/_test-api-error"
         ]
-        
+
+def test_create_scan_accepts_valid_request():
+    response = client.post(
+        "/scans/",
+        json={
+            "region": "ap-south-1",
+            "scan_name": "Security Audit",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "Scan request validated successfully",
+        "scan": {
+            "region": "ap-south-1",
+            "scan_name": "Security Audit",
+        },
+    }
+
+
+def test_create_scan_rejects_empty_region():
+    response = client.post(
+        "/scans/",
+        json={
+            "region": "",
+            "scan_name": "Security Audit",
+        },
+    )
+
+    assert response.status_code == 422

@@ -190,3 +190,32 @@ Automated tests cover configuration defaults and environment overrides.
 
 ### Current milestone
 Backend routes have been separated from application setup, and custom API error handling has been implemented and tested.
+
+
+## 16. Request Validation with Pydantic
+
+### Request schema
+- File: `backend/schemas.py`
+- `ScanRequest` defines the expected scan request fields.
+- `region` must contain at least one character.
+- `scan_name` must contain between 1 and 100 characters.
+
+### Scan endpoint
+- File: `backend/routes/scans.py`
+- Method: POST
+- Path: `/scans/`
+- Validates request data using `ScanRequest`.
+- Returns the validated request data.
+- Does not execute an AWS scan yet.
+
+### Application integration
+- File: `backend/main.py`
+- Registers the scans router with the FastAPI application.
+
+### Testing
+- File: `tests/test_schemas.py`
+- Tests valid schema data and rejects empty fields.
+- `tests/test_main.py` tests valid scan requests and rejects an empty region with HTTP 422.
+
+### Current milestone
+Request validation is implemented and covered by automated tests.

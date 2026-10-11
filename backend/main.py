@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from backend.config import settings
 from backend.errors import APIError
 from backend.routes.health import router as health_router
+from backend.routes.scans import router as scans_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -30,3 +31,4 @@ async def api_error_handler(
 
 
 app.include_router(health_router)
+app.include_router(scans_router)
