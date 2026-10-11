@@ -169,3 +169,24 @@ without modifying Python source code.
 ### Current milestone
 Automated tests cover configuration defaults and environment overrides.
 
+
+## 15. Backend Structure and Error Handling
+
+### Route organization
+- `backend/routes/health.py` contains the root and health endpoints.
+- `backend/routes/__init__.py` marks the routes directory as a Python package.
+- `backend/main.py` creates the FastAPI application and registers the router.
+
+### Error handling
+- `backend/errors.py` defines the reusable `APIError` exception.
+- `resource_not_found()` creates a standard HTTP 404 error.
+- `backend/main.py` registers a custom exception handler for `APIError`.
+- Custom API errors return a JSON body containing the error message and status code.
+
+### Testing
+- Tests cover the configuration defaults and environment overrides.
+- Tests cover the root and health endpoints.
+- Tests verify the custom error helper and its HTTP response format.
+
+### Current milestone
+Backend routes have been separated from application setup, and custom API error handling has been implemented and tested.
