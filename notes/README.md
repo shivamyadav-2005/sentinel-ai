@@ -369,3 +369,63 @@ Latest full test result: 19 passed, 1 non-blocking warning.
 - Test AWS responses using mocks.
 - Inspect bucket policies and ACLs to assess public exposure.
 - Return structured findings through the scan API.
+
+
+## 19. S3 Bucket Policy Analysis
+
+### Objective
+
+Extend the S3 scanner to identify potentially risky bucket
+policies using sample policy data, without connecting to AWS.
+
+### 19.1 New Function
+
+Implemented `analyze_bucket_policy()` in
+`backend/services/s3_scanner.py`.
+
+The function examines policy statements and identifies
+`Allow` statements containing wildcard principals.
+
+Supported examples include:
+
+- `"Principal": "*"`
+- `"Principal": {"AWS": "*"}`
+
+It also handles the `AWS` principal represented as a list.
+
+### 19.2 Findings
+
+- A matching wildcard principal produces a `WARNING`
+  with `HIGH` severity.
+- A missing policy produces a `WARNING` with `MEDIUM`
+  severity because exposure cannot be assessed.
+- No matching wildcard principal produces `PASS` for this
+  specific check.
+
+### 19.3 Automated Tests
+
+Added tests for:
+
+1. Wildcard principal detection.
+2. A non-wildcard AWS principal.
+3. Missing bucket policy.
+
+Latest full test result: 22 passed, 1 non-blocking warning.
+
+### 19.4 Limitations
+
+This is a basic policy pattern check, not a complete AWS
+authorization evaluator.
+
+It does not evaluate all policy conditions, explicit denies,
+ACLs, access points, or the effective permissions created
+by other AWS controls.
+
+A wildcard principal is a potential risk indicator, not
+proof that a bucket is publicly accessible.
+
+### Next Steps
+
+- Review and commit the policy analyzer.
+- Integrate the checks with the scan API.
+- Later, retrieve real AWS policy data using Boto3.
