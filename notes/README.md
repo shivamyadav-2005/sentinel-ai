@@ -303,3 +303,69 @@ Latest test result:
 - Commit and push validation improvements
 - Continue developing the scan API
 - Prepare the AWS security scanning service
+
+
+## 18. S3 Public-Access Configuration Analysis
+
+### Objective
+
+Create the first cloud security analysis service for SentinelAI
+without requiring an AWS account during development.
+
+### 18.1 Service Structure
+
+Created the following files:
+
+- `backend/services/__init__.py`
+- `backend/services/s3_scanner.py`
+- `tests/test_s3_scanner.py`
+
+The service layer separates security analysis from API routes.
+
+### 18.2 Scanner Function
+
+The function `analyze_bucket_public_access()` accepts a bucket
+name and public-access-block configuration.
+
+It checks these four S3 settings:
+
+- `BlockPublicAcls`
+- `IgnorePublicAcls`
+- `BlockPublicPolicy`
+- `RestrictPublicBuckets`
+
+If all four settings are enabled, the result is `PASS` with
+`INFO` severity.
+
+If one or more settings are disabled, the result is `WARNING`
+with `HIGH` severity.
+
+If configuration is unavailable, the result is `WARNING`.
+Missing configuration does not prove that a bucket is public.
+
+### 18.3 Testing Strategy
+
+Tests use sample dictionaries rather than real AWS requests.
+
+Scenarios covered:
+
+1. All four protections enabled.
+2. A public-access protection disabled.
+3. Public-access configuration unavailable.
+
+Latest full test result: 19 passed, 1 non-blocking warning.
+
+### 18.4 Current Limitations
+
+- The scanner does not connect to AWS.
+- It does not retrieve real bucket configurations.
+- It does not inspect bucket policies or ACLs.
+- A disabled protection setting does not by itself prove public exposure.
+- No AWS resources are modified.
+
+### 18.5 Next Steps
+
+- Add the S3 scanner's API and AWS integration design.
+- Test AWS responses using mocks.
+- Inspect bucket policies and ACLs to assess public exposure.
+- Return structured findings through the scan API.
