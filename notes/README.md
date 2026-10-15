@@ -219,3 +219,87 @@ Backend routes have been separated from application setup, and custom API error 
 
 ### Current milestone
 Request validation is implemented and covered by automated tests.
+
+
+## 17. Advanced Request Validation
+
+### Objective
+
+Improve the security and reliability of SentinelAI's scan
+request API by validating user input before processing it.
+
+### 17.1 Whitespace Validation
+
+We configured the ScanRequest Pydantic model using:
+
+```python
+model_config = ConfigDict(str_strip_whitespace=True)
+```
+
+This automatically removes leading and trailing whitespace
+from string fields before validation.
+
+Examples:
+
+- `"  Security Audit  "` becomes `"Security Audit"`
+- `"   "` is rejected by the minimum-length constraint.
+
+### 17.2 AWS Region Format Validation
+
+We added a custom Pydantic field validator:
+
+```python
+@field_validator("region")
+@classmethod
+def validate_region_format(cls, value: str) -> str:
+    pattern = r"^[a-z]{2}(?:-gov)?-[a-z]+-\d+$"
+
+    if not re.fullmatch(pattern, value):
+        raise ValueError(
+            "Region must follow a format such as ap-south-1"
+        )
+
+    return value
+```
+
+This checks whether the supplied region follows a common
+AWS region naming pattern.
+
+Examples:
+
+- `ap-south-1` — accepted
+- `eu-west-2` — accepted
+- `abc` — rejected
+- `ap-south` — rejected
+
+Important: Format validation does not confirm that the
+region exists or is enabled in an AWS account.
+
+### 17.3 Automated Testing
+
+We added tests covering:
+
+- Whitespace-only region rejection
+- Whitespace-only scan name rejection
+- Automatic whitespace trimming
+- Invalid region-format rejection
+- Valid region-format acceptance
+
+Latest test result:
+
+16 passed, 1 non-blocking deprecation warning.
+
+### 17.4 Engineering Concepts Learned
+
+- Input sanitization
+- Pydantic ConfigDict
+- Custom field validators
+- Regular expressions
+- Defensive API design
+- Automated validation testing
+
+### Next Steps
+
+- Commit and push validation improvements
+- Continue developing the scan API
+- Prepare the AWS security scanning service
