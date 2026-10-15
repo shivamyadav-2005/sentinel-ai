@@ -49,6 +49,21 @@ def test_missing_public_access_block():
     assert result["severity"] == "HIGH"
 
 
+def test_malformed_public_access_block():
+    result = analyze_bucket_public_access(
+        BUCKET_NAME,
+        {"PublicAccessBlockConfiguration": "invalid"},
+    )
+
+    assert result["status"] == "WARNING"
+
+
+def test_missing_public_access_settings():
+    result = analyze_bucket_public_access(BUCKET_NAME, {})
+
+    assert result["status"] == "WARNING"
+
+
 def test_wildcard_principal_policy():
     result = analyze_bucket_policy(
         BUCKET_NAME,
@@ -165,3 +180,51 @@ def test_missing_bucket_policy():
 
     assert result["status"] == "WARNING"
     assert result["severity"] == "MEDIUM"
+
+
+def test_missing_statement_field():
+    result = analyze_bucket_policy(BUCKET_NAME, {})
+
+    assert result["status"] == "WARNING"
+    assert "Statement" in result["message"]
+
+
+def test_statement_has_invalid_type():
+    result = analyze_bucket_policy(
+        BUCKET_NAME,
+        {"Statement": "invalid"},
+    )
+
+    assert result["status"] == "WARNING"
+
+
+def test_invalid_statement_inside_list():
+    result = analyze_bucket_policy(
+        BUCKET_NAME,
+        {"Statement": ["invalid"]},
+    )
+
+    assert result["status"] == "WARNING"
+    assert result["details"]["invalid_statements"] == 1
+
+
+def test_missing_effect_in_statement():
+    result = analyze_bucket_policy(
+        BUCKET_NAME,
+        {
+            "Statement": [
+                {
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                }
+            ]
+        },
+    )
+
+    assert result["status"] == "WARNING"
+
+
+def test_policy_is_not_a_dictionary():
+    result = analyze_bucket_policy(BUCKET_NAME, None)
+
+    assert result["status"] == "WARNING"

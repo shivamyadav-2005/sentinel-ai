@@ -569,3 +569,44 @@ These tests validate the behavior of SentinelAI's basic policy-pattern checks. T
 - Review the scanner's handling of malformed or unexpected policy data.
 - Add more edge-case tests.
 - Commit and push the verified changes after reviewing Git status.
+
+## 23. S3 Scanner Input Validation and Hardening
+
+### Objective
+
+Improve the scanner's handling of missing, malformed, or unexpected S3 security configuration data.
+
+### 23.1 Public Access Block Validation
+
+The scanner now checks whether the public-access configuration and its settings are dictionaries. Missing or invalid settings return a warning rather than a passing result.
+
+Each of the four public-access protection settings must be explicitly set to `True` for the check to pass.
+
+### 23.2 Bucket Policy Validation
+
+The scanner validates the policy structure before analyzing statements. It handles:
+- Missing policy data.
+- Missing `Statement` fields.
+- Invalid `Statement` types.
+- Invalid individual statements.
+- Statements with missing or unsupported `Effect` values.
+
+Malformed or incomplete policy data produces a warning instead of being silently treated as safe.
+
+### 23.3 Test Results
+
+Latest test result: **33 passed, 0 failed, 1 warning.**
+
+The remaining warning concerns deprecated `httpx` integration in the installed Starlette test client. It does not prevent the test suite from passing.
+
+### 23.4 Security Limitations
+
+The scanner detects selected wildcard-principal patterns and validates basic input structure. It does not calculate effective AWS permissions or guarantee that a bucket is private.
+
+Further improvements should consider policy conditions, explicit denies, ACLs, access points, and other AWS authorization controls.
+
+### Next Steps
+
+- Review the API response for malformed input scenarios.
+- Add dedicated tests for any newly identified edge cases.
+- Commit and push the verified changes after checking Git status.
