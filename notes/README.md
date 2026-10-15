@@ -532,3 +532,40 @@ retrieve real bucket configurations, or perform a live scan.
 - Commit and push the refactoring.
 - Introduce an AWS client layer when AWS access is available.
 - Keep mock-based tests so development can continue locally.
+
+## 22. Expanded S3 Scanner Test Coverage
+
+### Objective
+
+Improve confidence in the S3 security analysis logic by testing additional bucket policy scenarios.
+
+### 22.1 Public Access Block Tests
+
+Tested configurations where all four public-access protections are enabled, where a protection is disabled, and where the configuration is missing.
+
+### 22.2 Bucket Policy Tests
+
+Added coverage for:
+- A wildcard `Principal` set to `"*"`.
+- A wildcard AWS principal represented as a dictionary.
+- A wildcard AWS principal included in a list.
+- A non-wildcard AWS principal.
+- A wildcard principal in an explicit `Deny` statement.
+- Multiple policy statements with different principals.
+- A missing bucket policy.
+
+### 22.3 Test Results
+
+Latest test result: **26 passed, 0 failed, 1 warning.**
+
+The warning concerns deprecated `httpx` integration in the installed Starlette test client. It does not prevent the test suite from passing.
+
+### 22.4 Security Limitations
+
+These tests validate the behavior of SentinelAI's basic policy-pattern checks. They do not prove whether an S3 bucket is publicly accessible in every possible AWS configuration. Full access evaluation requires considering policy conditions, explicit denies, ACLs, access points, and other applicable controls.
+
+### Next Steps
+
+- Review the scanner's handling of malformed or unexpected policy data.
+- Add more edge-case tests.
+- Commit and push the verified changes after reviewing Git status.
