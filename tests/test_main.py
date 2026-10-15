@@ -1,16 +1,12 @@
+
 from fastapi import Request
 from fastapi.testclient import TestClient
 
-from backend.main import app
-
 from backend.errors import resource_not_found
-
-from fastapi.testclient import TestClient
-
 from backend.main import app
+
 
 client = TestClient(app)
-
 
 
 def test_root_endpoint():
@@ -22,7 +18,6 @@ def test_root_endpoint():
         "status": "online",
         "environment": "development",
     }
-
 
 
 def test_health_endpoint():
@@ -43,10 +38,6 @@ def test_resource_not_found_error():
 
 
 def test_api_error_handler():
-    from fastapi.testclient import TestClient
-
-    from backend.errors import resource_not_found
-
     async def trigger_api_error(request: Request):
         raise resource_not_found("Conversation not found")
 
@@ -73,6 +64,7 @@ def test_api_error_handler():
             if getattr(route, "path", None) != "/_test-api-error"
         ]
 
+
 def test_create_scan_accepts_valid_request():
     response = client.post(
         "/scans/",
@@ -83,13 +75,18 @@ def test_create_scan_accepts_valid_request():
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "message": "Scan request validated successfully",
-        "scan": {
-            "region": "ap-south-1",
-            "scan_name": "Security Audit",
-        },
+
+    data = response.json()
+
+    assert data["message"] == "Scan analysis completed using mock data"
+    assert data["scan"] == {
+        "region": "ap-south-1",
+        "scan_name": "Security Audit",
     }
+    assert data["source"] == "mock_data"
+    assert len(data["findings"]) == 2
+    assert data["findings"][0]["status"] == "PASS"
+    assert data["findings"][1]["status"] == "WARNING"
 
 
 def test_create_scan_rejects_empty_region():

@@ -429,3 +429,55 @@ proof that a bucket is publicly accessible.
 - Review and commit the policy analyzer.
 - Integrate the checks with the scan API.
 - Later, retrieve real AWS policy data using Boto3.
+
+
+## 20. Scan API Integration with S3 Analysis
+
+### Objective
+
+Connect the existing S3 security analysis functions to
+the FastAPI scan endpoint.
+
+### 20.1 Updated Endpoint
+
+The `POST /scans/` endpoint now:
+
+1. Validates the request using `ScanRequest`.
+2. Supplies sample public-access-block configuration.
+3. Supplies a sample S3 bucket policy.
+4. Runs both S3 analysis functions.
+5. Returns the request, findings, and data source.
+
+### 20.2 Response Structure
+
+The response contains:
+
+- `message`: indicates that mock analysis completed.
+- `scan`: the validated scan request.
+- `findings`: structured results from both checks.
+- `source`: `mock_data`, identifying the sample data source.
+
+The sample configuration produces a `PASS` finding for
+public-access-block settings and a `WARNING` finding for
+a policy containing a wildcard principal.
+
+### 20.3 Testing
+
+Updated the scan endpoint test to verify the new response
+structure and both finding statuses.
+
+Latest full test result: 22 passed, 1 non-blocking warning.
+
+### 20.4 Current Limitations
+
+- The endpoint uses hard-coded sample data.
+- It does not connect to AWS or inspect real buckets.
+- The findings are demonstrations, not real security results.
+- Wildcard-principal detection is a basic policy check,
+  not a complete AWS authorization evaluation.
+
+### Next Steps
+
+- Commit and push the API integration.
+- Separate mock data from production scanning logic.
+- Add a proper AWS client layer when AWS access is available.
