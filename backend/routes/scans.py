@@ -2,6 +2,11 @@
 from fastapi import APIRouter
 
 from backend.schemas import ScanRequest
+from backend.services.s3_mock_data import (
+    get_mock_bucket_name,
+    get_mock_bucket_policy,
+    get_mock_public_access_block,
+)
 from backend.services.s3_scanner import (
     analyze_bucket_policy,
     analyze_bucket_public_access,
@@ -12,40 +17,19 @@ router = APIRouter(prefix="/scans", tags=["Scans"])
 
 @router.post("/")
 def create_scan(request: ScanRequest):
-    # Mocked data for local development.
-    # This does not connect to AWS.
-    mock_bucket_name = "sentinelai-demo-bucket"
-
-    mock_public_access_block = {
-        "PublicAccessBlockConfiguration": {
-            "BlockPublicAcls": True,
-            "IgnorePublicAcls": True,
-            "BlockPublicPolicy": True,
-            "RestrictPublicBuckets": True,
-        }
-    }
-
-    mock_bucket_policy = {
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:GetObject",
-                "Resource": (
-                    "arn:aws:s3:::sentinelai-demo-bucket/*"
-                ),
-            }
-        ]
-    }
+    # Local mock data only; no AWS API calls are made.
+    bucket_name = get_mock_bucket_name()
+    public_access_block = get_mock_public_access_block()
+    bucket_policy = get_mock_bucket_policy()
 
     findings = [
         analyze_bucket_public_access(
-            mock_bucket_name,
-            mock_public_access_block,
+            bucket_name,
+            public_access_block,
         ),
         analyze_bucket_policy(
-            mock_bucket_name,
-            mock_bucket_policy,
+            bucket_name,
+            bucket_policy,
         ),
     ]
 

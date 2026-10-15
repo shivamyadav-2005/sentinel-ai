@@ -481,3 +481,54 @@ Latest full test result: 22 passed, 1 non-blocking warning.
 - Commit and push the API integration.
 - Separate mock data from production scanning logic.
 - Add a proper AWS client layer when AWS access is available.
+
+
+## 21. Separating Mock Data from API Routes
+
+### Objective
+
+Separate sample S3 data from the scan API route to improve
+code organization and prepare for future AWS integration.
+
+### 21.1 New Module
+
+Created `backend/services/s3_mock_data.py` with three functions:
+
+- `get_mock_bucket_name()`
+- `get_mock_public_access_block()`
+- `get_mock_bucket_policy()`
+
+These functions return fictional bucket information and
+sample security configuration data for local development.
+
+### 21.2 Updated Scan Route
+
+Updated `backend/routes/scans.py` to import the mock-data
+functions and pass their results to the existing S3 analysis
+functions.
+
+The route remains responsible for handling the API request
+and returning the structured findings.
+
+### 21.3 Separation of Responsibilities
+
+- `s3_mock_data.py` provides sample data.
+- `s3_scanner.py` analyzes the supplied data.
+- `scans.py` handles the API request and response.
+
+### 21.4 Testing
+
+The complete test suite passed after the refactoring.
+
+Latest result: 22 passed, 1 non-blocking warning.
+
+### 21.5 Current Limitations
+
+The endpoint still uses mock data. It does not connect to AWS,
+retrieve real bucket configurations, or perform a live scan.
+
+### Next Steps
+
+- Commit and push the refactoring.
+- Introduce an AWS client layer when AWS access is available.
+- Keep mock-based tests so development can continue locally.
