@@ -33,6 +33,9 @@ class ScanFinding(BaseModel):
     severity: Literal["INFO", "MEDIUM", "HIGH"]
     message: str
     details: dict[str, Any] | None = None
+    explanation: str
+    potential_impact: str
+    remediation: list[str] = Field(min_length=1)
 
 
 class ScanResponse(BaseModel):
