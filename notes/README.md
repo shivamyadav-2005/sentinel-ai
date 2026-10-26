@@ -610,3 +610,43 @@ Further improvements should consider policy conditions, explicit denies, ACLs, a
 - Review the API response for malformed input scenarios.
 - Add dedicated tests for any newly identified edge cases.
 - Commit and push the verified changes after checking Git status.
+
+## 24. Scan API Request Validation Tests
+
+### Objective
+
+Expand API test coverage to verify that invalid scan requests are rejected before reaching the scanner.
+
+### 24.1 Valid Request
+
+Verified that a valid scan request returns HTTP 200 and includes the expected scan details, mock-data source, and security findings.
+
+### 24.2 Invalid Request Scenarios
+
+Added tests for:
+- Missing `region`.
+- Missing `scan_name`.
+- Empty region.
+- Empty scan name.
+- Whitespace-only values.
+- Invalid region format.
+- JSON arrays instead of JSON objects.
+- Malformed JSON request bodies.
+
+These invalid requests are expected to return HTTP 422.
+
+### 24.3 Test Results
+
+Latest test result: **40 passed, 0 failed, 1 warning.**
+
+The warning concerns deprecated `httpx` integration in the installed Starlette test client and does not prevent the tests from passing.
+
+### 24.4 Scope
+
+This milestone improves automated verification of request validation. It does not introduce new application behavior or connect the API to AWS.
+
+### Next Steps
+
+- Review the current API and error-handling implementation.
+- Identify any remaining validation or response-handling gaps.
+- Commit and push the verified changes after checking Git status.

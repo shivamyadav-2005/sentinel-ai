@@ -99,3 +99,76 @@ def test_create_scan_rejects_empty_region():
     )
 
     assert response.status_code == 422
+
+
+def test_create_scan_rejects_missing_region():
+    response = client.post(
+        "/scans/",
+        json={"scan_name": "Security Audit"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_scan_rejects_missing_scan_name():
+    response = client.post(
+        "/scans/",
+        json={"region": "ap-south-1"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_scan_rejects_empty_scan_name():
+    response = client.post(
+        "/scans/",
+        json={
+            "region": "ap-south-1",
+            "scan_name": "",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_scan_rejects_whitespace_only_fields():
+    response = client.post(
+        "/scans/",
+        json={
+            "region": "   ",
+            "scan_name": "   ",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_scan_rejects_invalid_region_format():
+    response = client.post(
+        "/scans/",
+        json={
+            "region": "invalid-region",
+            "scan_name": "Security Audit",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_scan_rejects_non_object_json():
+    response = client.post(
+        "/scans/",
+        json=["ap-south-1", "Security Audit"],
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_scan_rejects_invalid_json_body():
+    response = client.post(
+        "/scans/",
+        content="{invalid json",
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 422
