@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter
 
-from backend.schemas import ScanRequest
+from backend.schemas import ScanRequest, ScanResponse
 from backend.services.s3_mock_data import (
     get_mock_bucket_name,
     get_mock_bucket_policy,
@@ -15,8 +15,8 @@ from backend.services.s3_scanner import (
 router = APIRouter(prefix="/scans", tags=["Scans"])
 
 
-@router.post("/")
-def create_scan(request: ScanRequest):
+@router.post("/", response_model=ScanResponse)
+def create_scan(request: ScanRequest) -> ScanResponse:
     # Local mock data only; no AWS API calls are made.
     bucket_name = get_mock_bucket_name()
     public_access_block = get_mock_public_access_block()
@@ -33,9 +33,9 @@ def create_scan(request: ScanRequest):
         ),
     ]
 
-    return {
-        "message": "Scan analysis completed using mock data",
-        "scan": request.model_dump(),
-        "findings": findings,
-        "source": "mock_data",
-    }
+    return ScanResponse(
+        message="Scan analysis completed using mock data",
+        scan=request,
+        findings=findings,
+        source="mock_data",
+    )

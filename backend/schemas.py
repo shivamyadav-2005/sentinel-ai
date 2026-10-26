@@ -1,5 +1,6 @@
 
 import re
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -21,3 +22,21 @@ class ScanRequest(BaseModel):
             )
 
         return value
+
+
+class ScanFinding(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    bucket_name: str
+    check: str
+    status: Literal["PASS", "WARNING"]
+    severity: Literal["INFO", "MEDIUM", "HIGH"]
+    message: str
+    details: dict[str, Any] | None = None
+
+
+class ScanResponse(BaseModel):
+    message: str
+    scan: ScanRequest
+    findings: list[ScanFinding]
+    source: Literal["mock_data"]

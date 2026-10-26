@@ -650,3 +650,53 @@ This milestone improves automated verification of request validation. It does no
 - Review the current API and error-handling implementation.
 - Identify any remaining validation or response-handling gaps.
 - Commit and push the verified changes after checking Git status.
+
+## 25. Typed Scan API Response Models
+
+### Objective
+
+Introduce Pydantic response models to define and validate the structure of scan API responses.
+
+### 25.1 ScanFinding
+
+Created a `ScanFinding` model with fields for:
+- Bucket name.
+- Security check identifier.
+- Status.
+- Severity.
+- Message.
+- Optional details.
+
+The model allows additional fields to preserve future finding metadata.
+
+### 25.2 ScanResponse
+
+Created a `ScanResponse` model containing:
+- The response message.
+- The validated scan request.
+- A list of structured security findings.
+- The data source identifier.
+
+The source is currently restricted to `mock_data`.
+
+### 25.3 Scan Route Integration
+
+Updated `backend/routes/scans.py` to declare `ScanResponse` as its response model and return a validated `ScanResponse` instance.
+
+FastAPI can use this model to validate returned data and document the response schema in OpenAPI.
+
+### 25.4 Test Results
+
+Latest test result: **40 passed, 0 failed, 1 warning.**
+
+The warning concerns deprecated `httpx` integration in the installed Starlette test client.
+
+### 25.5 Current Scope
+
+The endpoint continues to use local mock data. This change defines the API response contract; it does not introduce live AWS integration.
+
+### Next Steps
+
+- Add dedicated tests for the response schema.
+- Verify the generated OpenAPI documentation.
+- Commit and push the changes after checking Git status.
