@@ -756,3 +756,40 @@ The backend test suite was reported as passing after the remediation guidance ch
 - Add dedicated tests for the new guidance fields.
 - Improve the findings table presentation and verify the exported JSON report.
 '@ | Add-Content notes\README.md
+
+
+## 27. Automated Tests for Remediation Guidance
+
+### 27.1 Purpose
+
+Added dedicated automated tests for the rule-based security finding explanations, potential impacts, and remediation recommendations.
+
+### 27.2 Test Coverage
+
+The new `tests/test_remediation_guidance.py` covers:
+- Required explanation, impact, and remediation fields.
+- S3 public-access-block guidance for PASS and WARNING findings.
+- S3 bucket-policy guidance for WARNING and PASS findings.
+- Fallback guidance for an unknown check.
+- Validation of required `ScanFinding` fields.
+- Validation that `ScanResponse.source` only accepts `mock_data`.
+
+### 27.3 Verification
+
+Command:
+`python -m pytest -q`
+
+Result: **50 passed, 1 warning**.
+
+The warning is a Starlette deprecation notice concerning the use of `httpx` with `starlette.testclient`. It does not cause the test suite to fail.
+
+### 27.4 Security Scope
+
+All scan results remain based on local mock data. These tests do not connect to AWS or verify real cloud resources.
+
+### 27.5 Next Steps
+
+- Review the staged changes.
+- Commit and push the automated test milestone.
+- Verify that JSON export includes the enriched findings.
+- Continue developing the SentinelAI security analyst experience.
