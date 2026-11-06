@@ -13,6 +13,28 @@ const detailPanelStyle = {
   lineHeight: 1.6,
 };
 
+const analystPanelStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+};
+
+const chatMessagesStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  maxHeight: "450px",
+  overflowY: "auto",
+  padding: "12px 0",
+};
+
+const suggestedQuestions = [
+  "Which security issue should I fix first?",
+  "Explain my highest-risk finding.",
+  "How can I fix this issue?",
+  "Summarize my latest scan.",
+];
+
 function App() {
   const [region, setRegion] = useState("ap-south-1");
   const [scanName, setScanName] = useState("SentinelAI Security Audit");
@@ -20,11 +42,18 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [analystQuestion, setAnalystQuestion] = useState("");
+  const [analystMessages, setAnalystMessages] = useState([]);
+  const [analystLoading, setAnalystLoading] = useState(false);
+  const [analystError, setAnalystError] = useState("");
+
   async function runScan(event) {
     event.preventDefault();
     setLoading(true);
     setError("");
     setScan(null);
+    setAnalystMessages([]);
+    setAnalystError("");
 
     try {
       const response = await fetch(`${API_URL}/scans/`, {
@@ -62,12 +91,15 @@ function App() {
   }
 
   const findings = scan?.findings ?? [];
+
   const warningCount = findings.filter(
     (finding) => finding.status === "WARNING",
   ).length;
+
   const passedCount = findings.filter(
     (finding) => finding.status === "PASS",
   ).length;
+
   const highCount = findings.filter(
     (finding) => finding.severity === "HIGH",
   ).length;
@@ -83,6 +115,7 @@ function App() {
     const blob = new Blob([JSON.stringify(report, null, 2)], {
       type: "application/json",
     });
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -92,6 +125,77 @@ function App() {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  }
+
+  async function sendAnalystMessage(question) {
+    const trimmedQuestion = question.trim();
+
+    if (!trimmedQuestion || analystLoading) return;
+
+    if (!scan || findings.length === 0) {
+      setAnalystError("Run a security scan before asking the analyst.");
+      return;
+    }
+
+    setAnalystError("");
+    setAnalystQuestion("");
+
+    setAnalystMessages((previous) => [
+      ...previous,
+      {
+        role: "user",
+        content: trimmedQuestion,
+      },
+    ]);
+
+    setAnalystLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/analyst/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          question: trimmedQuestion,
+          findings: findings,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const detail = Array.isArray(data.detail)
+          ? data.detail.map((item) => item.msg).join(", ")
+          : data.detail || data.error?.message || "Analyst request failed.";
+
+        throw new Error(detail);
+      }
+
+      setAnalystMessages((previous) => [
+        ...previous,
+        {
+          role: "assistant",
+          content: data.answer,
+          priority: data.priority,
+          source: data.source,
+        },
+      ]);
+    } catch (err) {
+      setAnalystError(
+        err instanceof TypeError
+          ? "Cannot connect to the Analyst API. Check that the backend is running."
+          : err.message,
+      );
+    } finally {
+      setAnalystLoading(false);
+    }
+  }
+
+  function handleAnalystSubmit(event) {
+    event.preventDefault();
+    sendAnalystMessage(analystQuestion);
   }
 
   return (
@@ -117,6 +221,9 @@ function App() {
           <a className="nav-link" href="#findings">
             <span>◈</span> Findings
           </a>
+          <a className="nav-link" href="#analyst">
+            <span>✧</span> Analyst Mode
+          </a>
         </nav>
 
         <div className="sidebar-bottom">
@@ -127,7 +234,7 @@ function App() {
               <small>Mock data mode</small>
             </div>
           </div>
-          <p>SentinelAI MVP · Development</p>
+          <p>SentinelAI · Development</p>
         </div>
       </aside>
 
@@ -292,17 +399,17 @@ function App() {
             <div className="service-row">
               <span className="service-icon">AI</span>
               <span className="service-copy">
-                <strong>AI analyst</strong>
-                <small>Not integrated yet</small>
+                <strong>Analyst engine</strong>
+                <small>Local rule-based analysis</small>
               </span>
-              <span className="service-badge pending">Planned</span>
+              <span className="service-badge">Available</span>
             </div>
 
             <div className="notice-box">
               <span>ⓘ</span>
               <p>
-                Explanations and remediation guidance are rule-based. AWS and
-                external AI integrations are not active yet.
+                Analyst responses use local rules and supplied mock scan
+                findings. AWS and external AI integrations are not active.
               </p>
             </div>
           </article>
@@ -453,6 +560,204 @@ function App() {
               </p>
             </>
           )}
+        </section>
+
+        <section className="panel" id="analyst" style={{ marginTop: "24px" }}>
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">SENTINELAI INTELLIGENCE</p>
+              <h2>Security Analyst</h2>
+              <p>
+                Ask questions about findings from your latest security scan.
+              </p>
+            </div>
+            <span className="service-badge">Rule-based</span>
+          </div>
+
+          <div style={analystPanelStyle}>
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "var(--panel-background, #111827)",
+                border: "1px solid var(--border-color, #2d3748)",
+                fontSize: "0.9rem",
+                lineHeight: 1.6,
+              }}
+            >
+              <strong>Analysis mode: Local rule-based engine</strong>
+              <p style={{ marginTop: "5px" }}>
+                This analyst uses the findings supplied from your latest
+                mock-data scan. It does not use an external AI model or connect
+                to AWS.
+              </p>
+            </div>
+
+            {!scan && (
+              <div className="empty-state">
+                <strong>Scan required</strong>
+                <p>
+                  Run a security scan first. The analyst will then be able to
+                  answer questions about its findings.
+                </p>
+              </div>
+            )}
+
+            {scan && (
+              <>
+                <div style={chatMessagesStyle} aria-live="polite">
+                  {analystMessages.length === 0 && (
+                    <div
+                      style={{
+                        alignSelf: "flex-start",
+                        maxWidth: "85%",
+                        padding: "14px",
+                        borderRadius: "12px",
+                        background: "var(--panel-background, #111827)",
+                        border: "1px solid var(--border-color, #2d3748)",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <strong>SentinelAI Analyst</strong>
+                      <p style={{ marginTop: "6px" }}>
+                        Your latest scan has {findings.length} findings,
+                        including {highCount} HIGH severity findings. What
+                        would you like to understand?
+                      </p>
+                    </div>
+                  )}
+
+                  {analystMessages.map((message, index) => (
+                    <div
+                      key={`${message.role}-${index}`}
+                      style={{
+                        alignSelf:
+                          message.role === "user" ? "flex-end" : "flex-start",
+                        maxWidth: "85%",
+                        padding: "14px",
+                        borderRadius: "12px",
+                        background:
+                          message.role === "user"
+                            ? "var(--accent-color, #4338ca)"
+                            : "var(--panel-background, #111827)",
+                        color: message.role === "user" ? "#ffffff" : "inherit",
+                        border:
+                          message.role === "assistant"
+                            ? "1px solid var(--border-color, #2d3748)"
+                            : "none",
+                        lineHeight: 1.6,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      <strong>
+                        {message.role === "user"
+                          ? "You"
+                          : "SentinelAI Analyst"}
+                      </strong>
+                      <p style={{ marginTop: "6px" }}>{message.content}</p>
+
+                      {message.role === "assistant" && (
+                        <div
+                          style={{
+                            marginTop: "10px",
+                            fontSize: "0.78rem",
+                            opacity: 0.75,
+                          }}
+                        >
+                          Priority: {message.priority} · Source:{" "}
+                          {message.source}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {analystLoading && (
+                    <div
+                      style={{
+                        alignSelf: "flex-start",
+                        padding: "12px",
+                        borderRadius: "10px",
+                        background: "var(--panel-background, #111827)",
+                      }}
+                    >
+                      Analyst is reviewing your findings...
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <strong style={{ display: "block", marginBottom: "10px" }}>
+                    Suggested questions
+                  </strong>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    {suggestedQuestions.map((question) => (
+                      <button
+                        key={question}
+                        type="button"
+                        className="secondary-button"
+                        disabled={analystLoading}
+                        onClick={() => sendAnalystMessage(question)}
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {analystError && (
+              <div className="error-message" role="alert">
+                <strong>Analyst request failed</strong>
+                <p>{analystError}</p>
+              </div>
+            )}
+
+            <form
+              onSubmit={handleAnalystSubmit}
+              style={{
+                display: "flex",
+                gap: "10px",
+                alignItems: "stretch",
+                flexWrap: "wrap",
+              }}
+            >
+              <input
+                type="text"
+                value={analystQuestion}
+                onChange={(event) => setAnalystQuestion(event.target.value)}
+                placeholder={
+                  scan
+                    ? "Ask about your security findings..."
+                    : "Run a scan to start chatting..."
+                }
+                maxLength={1000}
+                disabled={!scan || analystLoading}
+                style={{ flex: "1 1 250px", minWidth: 0 }}
+              />
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={
+                  !scan || analystLoading || !analystQuestion.trim()
+                }
+              >
+                {analystLoading ? "Analyzing..." : "Send message →"}
+              </button>
+            </form>
+
+            <p style={{ fontSize: "0.82rem", opacity: 0.75 }}>
+              Demo limitation: responses are generated by deterministic local
+              rules. Always verify security recommendations against your real
+              AWS configuration.
+            </p>
+          </div>
         </section>
 
         <footer className="footer">

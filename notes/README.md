@@ -793,3 +793,91 @@ All scan results remain based on local mock data. These tests do not connect to 
 - Commit and push the automated test milestone.
 - Verify that JSON export includes the enriched findings.
 - Continue developing the SentinelAI security analyst experience.
+
+## 28. Analyst Mode MVP
+
+### 28.1 Overview
+
+Analyst Mode adds a security analyst chat interface to the SentinelAI dashboard. It allows users to ask questions about findings from their latest security scan.
+
+The initial implementation uses a deterministic, local rule-based analysis engine. It does not use an external AI model or connect to AWS.
+
+### 28.2 Backend Architecture
+
+The Analyst Mode backend consists of three main files:
+
+- `backend/analyst_schemas.py` - Defines chat request and response schemas.
+- `backend/routes/analyst.py` - Provides the Analyst API endpoint.
+- `backend/services/analyst.py` - Implements the rule-based analysis logic.
+
+The router is registered in `backend/main.py`.
+
+### 28.3 API Endpoint
+
+**POST `/analyst/chat`**
+
+The endpoint accepts:
+- A user question.
+- Findings supplied from the latest scan.
+
+The response contains:
+- `answer` - Generated analysis.
+- `priority` - HIGH, MEDIUM, or LOW.
+- `source` - `rule_based_analysis`.
+
+### 28.4 Analysis Capabilities
+
+The current rule-based analyst supports:
+
+1. Identifying high-priority security findings.
+2. Explaining security risks and potential impacts.
+3. Providing remediation recommendations.
+4. Summarizing the supplied scan findings.
+
+The analysis uses the findings passed by the frontend. It does not independently retrieve AWS resources or historical scans.
+
+### 28.5 Frontend Integration
+
+The Analyst Mode interface is integrated into `frontend/src/App.jsx`.
+
+Implemented features:
+
+- Analyst Mode navigation link.
+- Security analyst chat interface.
+- User and assistant message display.
+- Suggested questions.
+- Loading and error states.
+- Priority and analysis-source labels.
+- Connection to the latest scan findings through the `/analyst/chat` API.
+
+The chat requires a completed scan before questions can be submitted.
+
+### 28.6 Verification
+
+The following functionality has been manually verified:
+
+- Analyst API successfully processes a chat request.
+- HIGH-severity S3 bucket policy findings are identified.
+- Remediation questions return relevant recommended steps.
+- The React frontend successfully communicates with the backend.
+- Analyst responses appear in the dashboard chat interface.
+- The frontend production build completes successfully.
+
+### 28.7 Security Scope and Limitations
+
+- Scan findings are based on local mock data.
+- Analyst responses are generated using deterministic rules.
+- No external AI model is integrated.
+- No live AWS resources are accessed.
+- The analyst does not retain conversation context on the backend.
+- Recommendations must be verified against actual AWS configurations before implementation.
+
+### 28.8 Future Improvements
+
+- Finding-specific analysis and selection.
+- Better multi-turn conversation context.
+- Risk scoring and prioritization.
+- Scan history and comparison.
+- Integration with an external AI model.
+- Secure AWS integration when credentials and infrastructure are available.
+
