@@ -180,6 +180,9 @@ function App() {
           content: data.answer,
           priority: data.priority,
           source: data.source,
+          riskScore: data.risk_score,
+          riskLevel: data.risk_level,
+          riskExplanation: data.risk_explanation,
         },
       ]);
     } catch (err) {
@@ -655,6 +658,69 @@ function App() {
                           : "SentinelAI Analyst"}
                       </strong>
                       <p style={{ marginTop: "6px" }}>{message.content}</p>
+
+                      {message.role === "assistant" &&
+                        message.riskScore !== null &&
+                        message.riskScore !== undefined && (
+                          <div
+                            style={{
+                              marginTop: "12px",
+                              padding: "12px",
+                              borderRadius: "10px",
+                              border: "1px solid var(--border-color, #2d3748)",
+                              background: "rgba(127, 127, 127, 0.08)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: "12px",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <strong>Finding risk score</strong>
+                              <span
+                                className={`severity-badge ${(message.riskLevel || "info").toLowerCase()}`}
+                              >
+                                {message.riskLevel || "INFO"}
+                              </span>
+                            </div>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "baseline",
+                                gap: "5px",
+                                marginTop: "8px",
+                              }}
+                            >
+                              <strong style={{ fontSize: "1.7rem" }}>
+                                {message.riskScore}
+                              </strong>
+                              <span style={{ opacity: 0.7 }}>/ 100</span>
+                            </div>
+
+                            {message.riskExplanation && (
+                              <p style={{ marginTop: "8px", fontSize: "0.88rem" }}>
+                                {message.riskExplanation}
+                              </p>
+                            )}
+
+                            <p
+                              style={{
+                                marginTop: "8px",
+                                fontSize: "0.75rem",
+                                opacity: 0.7,
+                              }}
+                            >
+                              Prototype heuristic score based on severity and
+                              finding status; not a probability or validated
+                              industry risk rating.
+                            </p>
+                          </div>
+                        )}
 
                       {message.role === "assistant" && (
                         <div

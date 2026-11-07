@@ -2,6 +2,8 @@
 import re
 from typing import Any
 
+from backend.services.risk_scoring import calculate_risk_score
+
 
 STOP_WORDS = {
     "a", "an", "and", "are", "can", "do", "does", "for", "how",
@@ -90,10 +92,11 @@ def has_specific_resource_reference(question: str) -> bool:
 def analyze_question(
     question: str,
     findings: list[dict[str, Any]],
-) -> dict[str, str]:
-    """Generate a deterministic response from supplied scan findings."""
+) -> dict[str, Any]:
+    """Generate deterministic analysis and risk information."""
 
     normalized_question = question.lower()
+    selected_finding = None
 
     high_findings = [
         finding
@@ -112,6 +115,9 @@ def analyze_question(
             "answer": "No scan findings were provided. Run a security scan first.",
             "priority": "LOW",
             "source": "rule_based_analysis",
+            "risk_score": None,
+            "risk_level": None,
+            "risk_explanation": None,
         }
 
     matched_finding = find_matching_finding(question, findings)
@@ -128,21 +134,24 @@ def analyze_question(
             ),
             "priority": "LOW",
             "source": "rule_based_analysis",
+            "risk_score": None,
+            "risk_level": None,
+            "risk_explanation": None,
         }
 
     if any(
         word in normalized_question
         for word in ["priority", "first", "urgent", "important", "critical"]
     ):
-        finding = matched_finding
+        selected_finding = matched_finding
 
-        if finding is None:
+        if selected_finding is None:
             if high_findings:
-                finding = high_findings[0]
+                selected_finding = high_findings[0]
             elif warning_findings:
-                finding = warning_findings[0]
+                selected_finding = warning_findings[0]
 
-        if finding is None:
+        if selected_finding is None:
             answer = (
                 "No warning or HIGH severity findings were reported "
                 "in this scan."
@@ -151,11 +160,11 @@ def analyze_question(
         else:
             answer = (
                 f"Your selected priority finding is "
-                f"{finding.get('check', 'a security check')} "
-                f"with {finding.get('severity', 'UNKNOWN')} severity. "
-                f"{finding.get('explanation', finding.get('message', ''))}"
+                f"{selected_finding.get('check', 'a security check')} "
+                f"with {selected_finding.get('severity', 'UNKNOWN')} severity. "
+                f"{selected_finding.get('explanation', selected_finding.get('message', ''))}"
             )
-            priority = finding.get("severity", "LOW")
+            priority = selected_finding.get("severity", "LOW")
 
             if priority not in {"HIGH", "MEDIUM", "LOW"}:
                 priority = "LOW"
@@ -164,22 +173,22 @@ def analyze_question(
         word in normalized_question
         for word in ["fix", "remediation", "resolve", "repair"]
     ):
-        finding = matched_finding
+        selected_finding = matched_finding
 
-        if finding is None:
+        if selected_finding is None:
             if high_findings:
-                finding = high_findings[0]
+                selected_finding = high_findings[0]
             elif warning_findings:
-                finding = warning_findings[0]
+                selected_finding = warning_findings[0]
             else:
-                finding = findings[0]
+                selected_finding = findings[0]
 
-        steps = finding.get("remediation", [])
+        steps = selected_finding.get("remediation", [])
 
         if steps:
             answer = (
                 f"Recommended remediation for "
-                f"{finding.get('check', 'this finding')}:\n"
+                f"{selected_finding.get('check', 'this finding')}:\n"
                 + "\n".join(
                     f"{index}. {step}"
                     for index, step in enumerate(steps, start=1)
@@ -190,7 +199,7 @@ def analyze_question(
                 "No remediation steps are available for this finding yet."
             )
 
-        priority = finding.get("severity", "LOW")
+        priority = selected_finding.get("severity", "LOW")
 
         if priority not in {"HIGH", "MEDIUM", "LOW"}:
             priority = "LOW"
@@ -199,19 +208,19 @@ def analyze_question(
         word in normalized_question
         for word in ["explain", "impact", "risk", "why"]
     ):
-        finding = matched_finding
+        selected_finding = matched_finding
 
-        if finding is None:
-            finding = high_findings[0] if high_findings else findings[0]
+        if selected_finding is None:
+            selected_finding = high_findings[0] if high_findings else findings[0]
 
         answer = (
-            f"Finding: {finding.get('message', 'No message available.')}\n\n"
-            f"Explanation: {finding.get('explanation', 'Not available.')}\n\n"
+            f"Finding: {selected_finding.get('message', 'No message available.')}\n\n"
+            f"Explanation: {selected_finding.get('explanation', 'Not available.')}\n\n"
             f"Potential impact: "
-            f"{finding.get('potential_impact', 'Not available.')}"
+            f"{selected_finding.get('potential_impact', 'Not available.')}"
         )
 
-        priority = finding.get("severity", "LOW")
+        priority = selected_finding.get("severity", "LOW")
 
         if priority not in {"HIGH", "MEDIUM", "LOW"}:
             priority = "LOW"
@@ -224,10 +233,15 @@ def analyze_question(
         )
 
         if high_findings:
+            selected_finding = high_findings[0]
             answer += (
                 f" Highest priority: "
-                f"{high_findings[0].get('message', 'Review the HIGH severity finding.')}"
+                f"{selected_finding.get('message', 'Review the HIGH severity finding.')}"
             )
+        elif warning_findings:
+            selected_finding = warning_findings[0]
+        else:
+            selected_finding = findings[0]
 
         answer += (
             "\n\nYou can ask about priorities, risks, explanations, "
@@ -238,8 +252,19 @@ def analyze_question(
             "MEDIUM" if warning_findings else "LOW"
         )
 
+    risk_result = (
+        calculate_risk_score(selected_finding)
+        if selected_finding is not None
+        else None
+    )
+
     return {
         "answer": answer,
         "priority": priority,
         "source": "rule_based_analysis",
+        "risk_score": risk_result["score"] if risk_result else None,
+        "risk_level": risk_result["level"] if risk_result else None,
+        "risk_explanation": (
+            risk_result["explanation"] if risk_result else None
+        ),
     }

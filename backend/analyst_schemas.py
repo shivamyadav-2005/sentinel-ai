@@ -15,3 +15,7 @@ class AnalystChatResponse(BaseModel):
     answer: str
     priority: Literal["HIGH", "MEDIUM", "LOW"]
     source: Literal["rule_based_analysis"]
+
+    risk_score: int | None = Field(default=None, ge=0, le=100)
+    risk_level: Literal["HIGH", "MEDIUM", "LOW", "INFO"] | None = None
+    risk_explanation: str | None = None
